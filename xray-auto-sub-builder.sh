@@ -70,18 +70,11 @@ validate_config() {
     [[ -n "${OUT_FILE}" ]] || die "validate_config: OUT_FILE is empty"
     [[ ! -d "${OUT_FILE}" ]] || die "validate_config: OUT_FILE is a directory: ${OUT_FILE}"
 
-    # TMP_PARENT_DIR
-    [[ -n "${TMP_PARENT_DIR}" ]] || die "validate_config: TMP_PARENT_DIR is empty"
-    mkdir -p "${TMP_PARENT_DIR}" || die "validate_config: Cannot create TMP_PARENT_DIR: ${TMP_PARENT_DIR}"
-
-    local test_tmp="$(mktemp -d "${TMP_PARENT_DIR%/}/.test.XXXXXX")" \
-        || die "validate_config: Cannot create temporary directory inside: ${TMP_PARENT_DIR}"
-        
-    rmdir "${test_tmp}" || die "validate_config: Cannot remove test_tmp directory: ${test_tmp}"
-
     # XRAY_KNIFE_HTTP_ARGS
     [[ "$(declare -p XRAY_KNIFE_HTTP_ARGS 2> /dev/null)" == declare\ -a* ]] \
         || die "validate_config: XRAY_KNIFE_HTTP_ARGS must be a bash array" 
+
+    is_int "${MAX_VALID_NODES}" || die "validate_config: MAX_VALID_NODES must be an integer: ${MAX_VALID_NODES}"
 
     # === FLAGS (0/1) ===
 
@@ -90,16 +83,14 @@ validate_config() {
 
     # === OTHER SETTINGS ===
 
-    # LOG_DIR
-    if [[ -n "${LOG_DIR}" ]]; then
+    # TMP_PARENT_DIR
+    [[ -n "${TMP_PARENT_DIR}" ]] || die "validate_config: TMP_PARENT_DIR is empty"
+    mkdir -p "${TMP_PARENT_DIR}" || die "validate_config: Cannot create TMP_PARENT_DIR: ${TMP_PARENT_DIR}"
 
-        mkdir -p "${LOG_DIR}" || die "validate_config: Cannot create LOG_DIR: ${LOG_DIR}"
-
-        [[ -d "${LOG_DIR}" ]] || die "validate_config: LOG_DIR is not directory: ${LOG_DIR}"
-
-        [[ -w "${LOG_DIR}" ]] || die "validate_config: LOG_DIR is not writable: ${LOG_DIR}"
-
-    fi
+    local test_tmp="$(mktemp -d "${TMP_PARENT_DIR%/}/.test.XXXXXX")" \
+        || die "validate_config: Cannot create temporary directory inside: ${TMP_PARENT_DIR}"
+        
+    rmdir "${test_tmp}" || die "validate_config: Cannot remove test_tmp directory: ${test_tmp}"
 
     # LOCK_FILE
     [[ -n "${LOCK_FILE}" ]] || die "validate_config: LOCK_FILE is empty"
@@ -118,12 +109,7 @@ validate_config() {
     [[ -x "${XRAY_KNIFE_BIN}" ]] || die "validate_config: XRAY_KNIFE_BIN is not executable: ${XRAY_KNIFE_BIN}"
 
     # === REQUIRED COMMANDS ===
-
-    command -v flock &> /dev/null || die "validate_config: flock is not installed"
-    command -v curl &> /dev/null || die "validate_config: curl is not installed"
-    command -v dirname &> /dev/null || die "validate_config: dirname is not installed"
-    command -v mktemp &> /dev/null || die "validate_config: mktemp is not installed"
-    command -v rmdir &> /dev/null || die "validate_config: rmdir is not installed"
+    # command -v flock &> /dev/null || die "validate_config: flock is not installed"
 }
 
 # no args; no return
@@ -170,12 +156,19 @@ dedupe_links() {
 # to OUT_FILE
 test_links() {
 
-    local tmp_file
-    tmp_file="$(mktemp "${TMP_DIR%/}/test_links.XXXXXX")"
+    local tmp_file1 tmp_file2
+    tmp_file1="$(mktemp "${TMP_DIR%/}/test_links1.XXXXXX")"
+    tmp_file2="$(mktemp "${TMP_DIR%/}/test_links2.XXXXXX")"
 
-    "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file}"
+    "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file1}"
 
-    perl -0777 -pe 's/\n{2,}/\n/g' "${tmp_file}" > "${OUT_FILE}"
+    perl -0777 -pe 's/\n{2,}/\n/g' "${tmp_file1}" > "${tmp_file2}"
+
+    if (( MAX_VALID_NODES > 0 )); then
+        head -n "${MAX_VALID_NODES}" "${tmp_file2}" > "${OUT_FILE}"
+    else
+        mv "${tmp_file2}" "${OUT_FILE}"
+    fi
 }
 
 # no args; no return
