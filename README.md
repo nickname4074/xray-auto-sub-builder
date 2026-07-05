@@ -63,4 +63,4 @@ The script will fetch source lists, check nodes using [xray-knife](https://githu
 
 I think they deserve your star! ;)
 
-# Feel free to leave some feedback! ;)
+# Feel free to leave some feedback!
