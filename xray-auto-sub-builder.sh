@@ -34,7 +34,7 @@ fi
 
 # no args; no return
 cleanup() {
-    rmdir "${TMP_DIR}" &> /dev/null
+    rm -rf "${TMP_DIR}" &> /dev/null
     kill 0
 }
 
@@ -90,7 +90,7 @@ validate_config() {
     local test_tmp="$(mktemp -d "${TMP_PARENT_DIR%/}/.test.XXXXXX")" \
         || die "validate_config: Cannot create temporary directory inside: ${TMP_PARENT_DIR}"
         
-    rmdir "${test_tmp}" || die "validate_config: Cannot remove test_tmp directory: ${test_tmp}"
+    rm -rf "${test_tmp}" || die "validate_config: Cannot remove test_tmp directory: ${test_tmp}"
 
     # LOCK_FILE
     [[ -n "${LOCK_FILE}" ]] || die "validate_config: LOCK_FILE is empty"
