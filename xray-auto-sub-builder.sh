@@ -137,7 +137,7 @@ init_runtime() {
 # returns 1 if failed
 fetch_sources() {
 
-    "${XRAY_KNIFE_BIN}" subs fetch -f "${SOURCE_LIST_FILE}" -o- > "${UNITED_LINKS_FILE}" \
+    HOME="${TMP_DIR}" "${XRAY_KNIFE_BIN}" subs fetch -f "${SOURCE_LIST_FILE}" -o- > "${UNITED_LINKS_FILE}" \
         || { log_error "fetch_sources"; return 1; }
 }
 
@@ -160,7 +160,7 @@ test_links() {
     tmp_file1="$(mktemp "${TMP_DIR%/}/test_links1.XXXXXX")"
     tmp_file2="$(mktemp "${TMP_DIR%/}/test_links2.XXXXXX")"
 
-    "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file1}"
+    HOME="${TMP_DIR}" "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file1}"
 
     perl -0777 -pe 's/\n{2,}/\n/g' "${tmp_file1}" > "${tmp_file2}"
 
