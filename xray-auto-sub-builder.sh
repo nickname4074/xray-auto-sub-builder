@@ -34,11 +34,11 @@ fi
 
 # no args; no return
 cleanup() {
-    rm -rf "${TMP_DIR}" &> /dev/null
+    [[ -d "${TMP_DIR}" ]] && rm -rf "${TMP_DIR}" &> /dev/null
     kill 0
 }
 
-trap 'status=$?; log_info "exiting..." >&2; cleanup; exit "${status}"' EXIT
+trap 'status=$?; log_info "exiting..." >&2; cleanup; exit "${status}"' EXIT INT
 
 # no args; no return
 validate_config() {
@@ -122,10 +122,14 @@ lock() {
 # global variables:
 # TMP_DIR
 # UNITED_LINKS_FILE
+# DB_TMP_DIR
 init_runtime() {
 
     # TMP_DIR
     TMP_DIR="$(mktemp -d "${TMP_PARENT_DIR%/}/.tmp_dir_XXXXXX")"
+
+    # DB_TMP_DIR
+    DB_TMP_DIR="$(mktemp -d "${TMP_DIR%/}/.db_tmp_dir_XXXXXX")"
 
     # UNITED_LINKS_FILE
     UNITED_LINKS_FILE="${TMP_DIR%/}/UNITED_LINKS_FILE.txt"
@@ -137,7 +141,7 @@ init_runtime() {
 # returns 1 if failed
 fetch_sources() {
 
-    HOME="${TMP_DIR}" "${XRAY_KNIFE_BIN}" subs fetch -f "${SOURCE_LIST_FILE}" -o- > "${UNITED_LINKS_FILE}" \
+    HOME="${DB_TMP_DIR}" "${XRAY_KNIFE_BIN}" subs fetch -f "${SOURCE_LIST_FILE}" -o- > "${UNITED_LINKS_FILE}" \
         || { log_error "fetch_sources"; return 1; }
 }
 
@@ -160,7 +164,7 @@ test_links() {
     tmp_file1="$(mktemp "${TMP_DIR%/}/test_links1.XXXXXX")"
     tmp_file2="$(mktemp "${TMP_DIR%/}/test_links2.XXXXXX")"
 
-    HOME="${TMP_DIR}" "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file1}"
+    HOME="${DB_TMP_DIR}" "${XRAY_KNIFE_BIN}" http "${XRAY_KNIFE_HTTP_ARGS[@]}" -f "${UNITED_LINKS_FILE}" -o "${tmp_file1}"
 
     perl -0777 -pe 's/\n{2,}/\n/g' "${tmp_file1}" > "${tmp_file2}"
 
@@ -217,6 +221,8 @@ main() {
             dedupe_links
             test_links
 
+            rm -rf "${DB_TMP_DIR%/}/*" &> /dev/null
+
             wait_animation "${CHECK_INTERVAL}" &
             sleep "${CHECK_INTERVAL}"
         
@@ -234,6 +240,8 @@ main() {
 
         dedupe_links
         test_links
+
+        rm -rf "${DB_TMP_DIR%/}/*" &> /dev/null
 
     fi
 }
