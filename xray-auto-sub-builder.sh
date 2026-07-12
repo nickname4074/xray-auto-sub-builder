@@ -221,7 +221,7 @@ main() {
             dedupe_links
             test_links
 
-            rm -rf "${DB_TMP_DIR%/}/*" &> /dev/null
+            find "${TMP_DIR%/}" -mindepth 1 -delete
 
             wait_animation "${CHECK_INTERVAL}" &
             sleep "${CHECK_INTERVAL}"
@@ -241,7 +241,7 @@ main() {
         dedupe_links
         test_links
 
-        rm -rf "${DB_TMP_DIR%/}/*" &> /dev/null
+        find "${TMP_DIR%/}" -mindepth 1 -delete
 
     fi
 }

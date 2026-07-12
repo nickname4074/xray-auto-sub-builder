@@ -21,6 +21,7 @@ while true; do
     # 2) extract share links
     # 3) check them using xray-knife
     # 4) write working nodes to a static output file
+    # 5) sleep ...
 done
 ```
 
@@ -36,7 +37,18 @@ Basically, you just need to set the source URLs, the output file and the check i
 
 ## Installation
 
-Download the latest release archive for your system from the Releases page
+```bash
+# xray-auto-sub-builder
+mkdir xray-auto-sub-builder
+cd xray-auto-sub-builder
+curl -L 'https://github.com/nickname4074/xray-auto-sub-builder/archive/refs/heads/main.tar.gz' | tar xz --strip-components=1
+
+# xray-knife binary
+mkdir xray-knife
+wget -O xray-knife-linux-amd64.zip 'https://github.com/lilendian0x00/xray-knife/releases/download/v10.0.0/Xray-knife-linux-64.zip' # change url if your system architecture is not linux-amd64
+unzip xray-knife-linux-amd64.zip -d ./xray-knife
+rm -f xray-knife-linux-amd64.zip
+```
 
 ## Usage
 
